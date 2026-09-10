@@ -102,7 +102,10 @@ export function createAreaModelLevel(kit: LevelKit): Level {
     old.material.dispose();
     old.removeFromParent();
 
-    const label = makeLabel(text, { height: labelHeight(block.part) });
+    const label = makeLabel(text, {
+      height: labelHeight(block.part),
+      maxWidth: block.part.b * CELL * 0.94,
+    });
     label.position.set(
       (block.part.b * CELL) / 2,
       (block.part.a * CELL) / 2,
@@ -146,7 +149,10 @@ export function createAreaModelLevel(kit: LevelKit): Level {
       outline.position.z = -0.55;
       group.add(outline);
 
-      const label = makeLabel(`${part.a} × ${part.b}`, { height: labelHeight(part) });
+      const label = makeLabel(`${part.a} × ${part.b}`, {
+        height: labelHeight(part),
+        maxWidth: part.b * CELL * 0.94,
+      });
       label.position.set((part.b * CELL) / 2, (part.a * CELL) / 2, 1.2);
       group.add(label);
 

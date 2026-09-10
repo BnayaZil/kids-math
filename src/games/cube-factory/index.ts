@@ -72,6 +72,9 @@ export function createCubeFactory(ctx: GameContext): GameInstance {
 
   let level: Level | null = null;
   let stars: StarBook = loadStars();
+  // The HUD's height changes as controls appear; re-measuring every so often
+  // keeps the cubes out from under the number pad without thrashing layout.
+  let sinceMeasure = 99;
   // A level finishes from inside its own update(); tearing it down there would
   // pull the floor out mid-frame, so it waits for the next one.
   let teardownPending = false;
@@ -154,10 +157,16 @@ export function createCubeFactory(ctx: GameContext): GameInstance {
   return {
     update(dt) {
       if (teardownPending) stopLevel();
+      if (++sinceMeasure >= 10) {
+        sinceMeasure = 0;
+        const { top, bottom } = hud.bands();
+        view.setBands(top, bottom);
+      }
       level?.update(dt);
       view.update(dt);
     },
     resize() {
+      sinceMeasure = 99;
       view.resize();
       level?.resize?.();
     },

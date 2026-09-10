@@ -118,12 +118,19 @@ export function makeGridOutline(rows: number, cols: number, color: number): THRE
   return new THREE.LineSegments(geometry, material);
 }
 
-/** A flat translucent rectangle, origin at its bottom-left corner. */
+/**
+ * A flat translucent rectangle, origin at its bottom-left corner.
+ *
+ * `glow` switches to additive blending: over the dark background a plain 30%
+ * yellow panel comes out a muddy olive, which is no use at all when the game
+ * has just told the kid to "tap the glowing row".
+ */
 export function makePanel(
   width: number,
   height: number,
   color: number,
   opacity: number,
+  glow = false,
 ): THREE.Mesh {
   const geometry = new THREE.PlaneGeometry(width, height);
   geometry.translate(width / 2, height / 2, 0);
@@ -133,6 +140,7 @@ export function makePanel(
     opacity,
     depthWrite: false,
     side: THREE.DoubleSide,
+    blending: glow ? THREE.AdditiveBlending : THREE.NormalBlending,
   });
   return new THREE.Mesh(geometry, material);
 }
@@ -145,7 +153,7 @@ export function makePanel(
  */
 export function makeLabel(
   text: string,
-  opts: { color?: string; background?: string; height?: number } = {},
+  opts: { color?: string; background?: string; height?: number; maxWidth?: number } = {},
 ): THREE.Sprite {
   const color = opts.color ?? '#ffffff';
   const background = opts.background ?? 'rgba(0,0,0,0.55)';
@@ -182,7 +190,14 @@ export function makeLabel(
   texture.colorSpace = THREE.SRGBColorSpace;
   const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false });
   const sprite = new THREE.Sprite(material);
-  sprite.scale.set((canvas.width / canvas.height) * worldHeight, worldHeight, 1);
+  // Never let a label grow wider than the block it names, or neighbouring
+  // labels overlap and hide each other's digits.
+  const aspect = canvas.width / canvas.height;
+  const height =
+    opts.maxWidth && aspect * worldHeight > opts.maxWidth
+      ? opts.maxWidth / aspect
+      : worldHeight;
+  sprite.scale.set(aspect * height, height, 1);
   // Labels sit in front of the cubes they describe.
   sprite.renderOrder = 10;
   return sprite;

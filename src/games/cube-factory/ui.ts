@@ -27,6 +27,7 @@ export interface StepperHandle {
 export class Hud {
   private readonly root: HTMLDivElement;
   private readonly styleEl: HTMLStyleElement;
+  private readonly topEl: HTMLDivElement;
   private readonly questionEl: HTMLDivElement;
   private readonly subEl: HTMLDivElement;
   private readonly tallyEl: HTMLDivElement;
@@ -49,6 +50,7 @@ export class Hud {
     this.root = div('cf-root');
 
     const top = div('cf-top');
+    this.topEl = top;
     this.questionEl = div('cf-question');
     this.subEl = div('cf-sub');
     this.tallyEl = div('cf-tally');
@@ -66,7 +68,32 @@ export class Hud {
 
   setQuestion(main: string, sub = '') {
     this.questionEl.textContent = main;
+    // "13 × 24" wants to be huge; "Find every rectangle with 18 cubes" does not.
+    this.questionEl.classList.toggle('cf-question--long', main.length > 16);
     this.subEl.textContent = sub;
+  }
+
+  /**
+   * How much screen height the HUD is really eating, top and bottom, as
+   * fractions of the overlay. The camera needs this to keep the cubes out from
+   * under the number pad, and it changes as controls come and go.
+   */
+  bands(): { top: number; bottom: number } {
+    const fallback = { top: 0.22, bottom: 0.28 };
+    try {
+      const whole = this.root.getBoundingClientRect();
+      if (!whole || whole.height <= 0) return fallback;
+      const topRect = this.topEl.getBoundingClientRect();
+      const hasControls = this.bottomEl.children.length > 0;
+      const bottomRect = this.bottomEl.getBoundingClientRect();
+      return {
+        top: Math.max(0, topRect.bottom - whole.top) / whole.height,
+        bottom: hasControls ? Math.max(0, whole.bottom - bottomRect.top) / whole.height : 0.04,
+      };
+    } catch {
+      // Measuring must never be the thing that stops the game.
+      return fallback;
+    }
   }
 
   /** The chip under the question: skip counts, progress, the running area. */
@@ -348,6 +375,9 @@ const CSS = `
   line-height: 1.1;
   text-shadow: 0 4px 0 rgba(0, 0, 0, 0.35);
 }
+.cf-question--long {
+  font-size: clamp(1.3rem, 4.6vw, 2.3rem);
+}
 .cf-sub {
   font-size: clamp(0.95rem, 3.4vw, 1.45rem);
   font-weight: 700;
@@ -452,17 +482,23 @@ const CSS = `
 .cf-btn--primary { background: #ffd93d; }
 .cf-btn:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(0, 0, 0, 0.3); }
 
+/* Sits high and carries its own dark plate: it lands on top of the cubes and
+   their labels, and both have to stay readable underneath it. */
 .cf-toast {
   position: absolute;
-  top: 46%;
+  top: 31%;
   left: 50%;
   transform: translate(-50%, -50%) scale(0.6);
   opacity: 0;
-  font-size: clamp(2rem, 9vw, 4rem);
+  font-size: clamp(1.7rem, 6.5vw, 3rem);
   font-weight: 900;
-  text-shadow: 0 5px 0 rgba(0, 0, 0, 0.35);
+  padding: 8px 26px;
+  border-radius: 22px;
+  background: rgba(8, 12, 32, 0.84);
+  text-shadow: 0 4px 0 rgba(0, 0, 0, 0.35);
   transition: opacity 0.18s ease, transform 0.18s ease;
   pointer-events: none;
+  white-space: nowrap;
 }
 .cf-toast--show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 .cf-toast--good { color: #9ee37d; }
