@@ -4,6 +4,20 @@ A collection of kids' math mini-games (ages 7–10) built with [three.js](https:
 Vite, and vanilla TypeScript. No frameworks, no network, no paid assets — three.js
 primitives, CSS, and emoji only.
 
+## Play online
+
+The games are published to **GitHub Pages** and update automatically on every
+push to `main`:
+
+### 👉 https://bnayazil.github.io/kids-math/
+
+Open that one URL on any phone, tablet, or laptop — no dev server, no install.
+Each push to `main` runs the [`Deploy to GitHub Pages`](.github/workflows/deploy.yml)
+workflow (build + publish) and the live site refreshes a minute or two later.
+
+> Requires GitHub Pages to be enabled once, under **Settings → Pages → Source:
+> GitHub Actions**.
+
 ## Run it
 
 ```bash
