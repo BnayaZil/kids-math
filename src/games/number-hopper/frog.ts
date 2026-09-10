@@ -105,11 +105,24 @@ export function createFrog(): Frog {
     body.add(foot);
   }
 
-  // The number the frog is on, floating above its head. Kept outside the rig
-  // so the frog's size does not change how big the number reads.
-  const READOUT_REST_Y = 2.9;
+  /**
+   * The number the frog is standing on: above its head, slightly towards the
+   * camera, and outside the rig so the frog's size does not change how big the
+   * number reads. It does NOT follow the jump.
+   *
+   * Both alternatives were worse: letting it ride the full arc pushed it into
+   * the sum banner at the top of the screen, and clamping how far it could
+   * rise put it exactly where the frog's body passes, so the frog covered its
+   * own number at the peak of a +10 hop. Sitting still and in front, it can
+   * never be occluded, and it reads as a sign over the square rather than a
+   * balloon tied to the frog.
+   */
+  // High enough to clear the signpost labels even when the frog is standing on
+  // a multiple of ten, directly in front of one.
+  const READOUT_REST_Y = 3.1;
+  const READOUT_Z = 1.15;
   const readout = makeLabel('0', { size: 1.15, color: '#1b3a6b', background: '#ffffff' });
-  readout.sprite.position.set(0, READOUT_REST_Y, 0);
+  readout.sprite.position.set(0, READOUT_REST_Y, READOUT_Z);
   group.add(readout.sprite);
 
   let value = 0;
@@ -143,7 +156,6 @@ export function createFrog(): Frog {
       body.position.y = 0;
       body.scale.set(1, 1, 1);
       group.rotation.y = 0;
-      readout.sprite.position.y = READOUT_REST_Y;
     },
 
     hopTo(n: number, onLand?: () => void) {
@@ -183,14 +195,10 @@ export function createFrog(): Frog {
           1 - 0.12 * stretch + 0.18 * squash,
         );
 
-        // The number rides with the frog instead of being flown over.
-        readout.sprite.position.y = READOUT_REST_Y + body.position.y * FROG_SCALE;
-
         if (t >= 1) {
           hopping = false;
           group.position.x = to;
           body.position.y = 0;
-          readout.sprite.position.y = READOUT_REST_Y;
           const done = landed;
           landed = undefined;
           done?.();
