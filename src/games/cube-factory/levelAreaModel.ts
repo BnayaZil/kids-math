@@ -211,7 +211,10 @@ export function createAreaModelLevel(kit: LevelKit): Level {
     block.answered = true;
     sounds.correct();
     hud.toast('Yes! 🎉', 'good');
-    hud.hideControls();
+    // Grey the pad out rather than removing it: unmounting it here changed the
+    // HUD's height twice per answer, so the cubes pumped in and out and could
+    // be caught sitting under the keys.
+    hud.setPadEnabled(false);
 
     const color = (block.panel.material as THREE.MeshBasicMaterial).color.getHex();
     const cubes = new CubeBlock(block.part.a, block.part.b, color, { stagger: 0.02 });

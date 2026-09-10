@@ -39,6 +39,8 @@ export class Hud {
   private entryEl: HTMLDivElement | null = null;
   private entry = '';
   private toastTimer = 0;
+  private padKeys: HTMLButtonElement[] = [];
+  private onLayout: (() => void) | null = null;
 
   constructor(
     mount: HTMLElement,
@@ -55,15 +57,30 @@ export class Hud {
     this.subEl = div('cf-sub');
     this.tallyEl = div('cf-tally');
     this.trophiesEl = div('cf-trophies');
-    top.append(this.questionEl, this.subEl, this.tallyEl, this.trophiesEl);
+    this.toastEl = div('cf-toast');
+    // The toast lives INSIDE the top block, in a slot that is always reserved.
+    // Floating it over the scene meant it covered whatever was behind it —
+    // first the running sum, then a block's label. A permanent slot cannot
+    // overlap anything, and because it is always there the HUD's height never
+    // changes when it appears, so the cubes do not pump.
+    top.append(this.questionEl, this.subEl, this.tallyEl, this.trophiesEl, this.toastEl);
 
     this.bottomEl = div('cf-bottom');
-    this.toastEl = div('cf-toast');
     this.panelEl = div('cf-panel');
     this.panelEl.hidden = true;
 
-    this.root.append(top, div('cf-spacer'), this.bottomEl, this.toastEl, this.panelEl);
+    this.root.append(top, div('cf-spacer'), this.bottomEl, this.panelEl);
     mount.append(this.styleEl, this.root);
+  }
+
+  /**
+   * Called whenever anything that changes the HUD's height happens, so the
+   * camera can re-measure in the SAME frame. Polling for this was the bug: for
+   * about a sixth of a second after the pad reappeared, the camera was still
+   * framed for a screen with no pad, and the cubes sat under the keys.
+   */
+  setLayoutListener(fn: () => void) {
+    this.onLayout = fn;
   }
 
   setQuestion(main: string, sub = '') {
@@ -71,14 +88,16 @@ export class Hud {
     // "13 × 24" wants to be huge; "Find every rectangle with 18 cubes" does not.
     this.questionEl.classList.toggle('cf-question--long', main.length > 16);
     this.subEl.textContent = sub;
+    this.notifyLayout();
   }
 
   /**
-   * How much screen height the HUD is really eating, top and bottom, as
-   * fractions of the overlay. The camera needs this to keep the cubes out from
-   * under the number pad, and it changes as controls come and go.
+   * Measure how much screen height the HUD is really eating, top and bottom, as
+   * fractions of the overlay — and park the toast just below the top block
+   * while we have the numbers, so a celebration never lands on the question or
+   * the running sum.
    */
-  bands(): { top: number; bottom: number } {
+  measure(): { top: number; bottom: number } {
     const fallback = { top: 0.22, bottom: 0.28 };
     try {
       const whole = this.root.getBoundingClientRect();
@@ -86,8 +105,10 @@ export class Hud {
       const topRect = this.topEl.getBoundingClientRect();
       const hasControls = this.bottomEl.children.length > 0;
       const bottomRect = this.bottomEl.getBoundingClientRect();
+
+      const topPx = Math.max(0, topRect.bottom - whole.top);
       return {
-        top: Math.max(0, topRect.bottom - whole.top) / whole.height,
+        top: topPx / whole.height,
         bottom: hasControls ? Math.max(0, whole.bottom - bottomRect.top) / whole.height : 0.04,
       };
     } catch {
@@ -100,6 +121,7 @@ export class Hud {
   setTally(text: string) {
     this.tallyEl.textContent = text;
     this.tallyEl.hidden = text === '';
+    this.notifyLayout();
   }
 
   /** The factor pairs found so far, as trophy chips under the question. */
@@ -110,6 +132,7 @@ export class Hud {
       chip.textContent = `🏆 ${label}`;
       this.trophiesEl.append(chip);
     }
+    this.notifyLayout();
   }
 
   /** Big centred word: "Yes!", "Try again". Fades itself out. */
@@ -152,6 +175,7 @@ export class Hud {
         btn.textContent = key;
       }
       btn.addEventListener('click', () => {
+        if (btn.disabled) return;
         if (key === 'go') {
           if (this.entry === '') {
             this.shake();
@@ -169,10 +193,27 @@ export class Hud {
         this.sounds.tick();
         entryEl.textContent = this.entry === '' ? '?' : this.entry;
       });
+      this.padKeys.push(btn);
       pad.append(btn);
     }
 
     this.bottomEl.append(entryEl, pad);
+    this.notifyLayout();
+  }
+
+  /**
+   * Grey the pad out without unmounting it.
+   *
+   * Removing the pad between pieces changed the HUD's height twice per answer,
+   * which made the cubes zoom in and back out every time — and left a window
+   * where the camera was framed for a screen with no pad while the pad was
+   * back on it. Keeping it mounted keeps the layout still.
+   */
+  setPadEnabled(enabled: boolean) {
+    for (const key of this.padKeys) {
+      key.disabled = !enabled;
+      key.classList.toggle('cf-off', !enabled);
+    }
   }
 
   /** Empty the typed digits without rebuilding the pad. */
@@ -263,6 +304,7 @@ export class Hud {
 
     paint();
     this.bottomEl.append(rowsRow, colsRow, build);
+    this.notifyLayout();
 
     return {
       set: (r, c) => {
@@ -282,6 +324,7 @@ export class Hud {
 
   hideControls() {
     this.clearBottom();
+    this.notifyLayout();
   }
 
   /**
@@ -339,6 +382,11 @@ export class Hud {
     this.bottomEl.replaceChildren();
     this.entryEl = null;
     this.entry = '';
+    this.padKeys = [];
+  }
+
+  private notifyLayout() {
+    this.onLayout?.();
   }
 }
 
@@ -482,25 +530,28 @@ const CSS = `
 .cf-btn--primary { background: #ffd93d; }
 .cf-btn:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(0, 0, 0, 0.3); }
 
-/* Sits high and carries its own dark plate: it lands on top of the cubes and
-   their labels, and both have to stay readable underneath it. */
+/* A slot in the top block that is always reserved, so the celebration can never
+   cover the sum, a block label, or the cubes — and its arrival never changes
+   the HUD's height. */
 .cf-toast {
-  position: absolute;
-  top: 31%;
-  left: 50%;
-  transform: translate(-50%, -50%) scale(0.6);
-  opacity: 0;
-  font-size: clamp(1.7rem, 6.5vw, 3rem);
-  font-weight: 900;
-  padding: 8px 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 50px;
+  margin-top: 8px;
+  padding: 0 26px;
   border-radius: 22px;
   background: rgba(8, 12, 32, 0.84);
-  text-shadow: 0 4px 0 rgba(0, 0, 0, 0.35);
+  font-size: clamp(1.4rem, 5vw, 2.2rem);
+  font-weight: 900;
+  opacity: 0;
+  transform: scale(0.6);
+  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.35);
   transition: opacity 0.18s ease, transform 0.18s ease;
   pointer-events: none;
   white-space: nowrap;
 }
-.cf-toast--show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+.cf-toast--show { opacity: 1; transform: scale(1); }
 .cf-toast--good { color: #9ee37d; }
 .cf-toast--bad { color: #ffd93d; }
 
@@ -569,6 +620,18 @@ const CSS = `
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-9px); }
   75% { transform: translateX(9px); }
+}
+
+/* On a landscape screen the pad was eating 45% of the height and squeezing the
+   cubes into a strip. Phones are portrait, so this leaves them alone. */
+@media (min-aspect-ratio: 1/1) {
+  .cf-pad { width: min(272px, 34vw); gap: 8px; }
+  .cf-key { min-height: 46px; font-size: 1.5rem; border-radius: 13px; }
+  .cf-entry { font-size: clamp(1.4rem, 4vw, 2.1rem); min-width: 130px; }
+  .cf-bottom { gap: 7px; padding-bottom: 14px; }
+  .cf-top { margin-top: 74px; }
+  .cf-step__btn { width: 50px; min-height: 50px; font-size: 1.6rem; }
+  .cf-step__value { font-size: 1.7rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

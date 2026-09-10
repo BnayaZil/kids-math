@@ -72,7 +72,13 @@ export class OrbitView {
     const tanHalf = Math.tan(verticalFov / 2);
 
     // The slice of screen height the cubes may actually use.
-    const free = Math.max(0.25, 1 - this.topBand - this.bottomBand);
+    //
+    // This floor exists only to stop a division by zero if the HUD ever claimed
+    // the whole screen. It must stay BELOW anything the real HUD produces: at
+    // 1280x800 the question block plus the number pad leave 0.216, and a floor
+    // of 0.25 quietly told the camera it had more room than it did — which is
+    // how the pad ended up covering the cubes.
+    const free = Math.max(0.12, 1 - this.topBand - this.bottomBand);
 
     const forHeight = (this.contentHeight * MARGIN) / (2 * tanHalf * free);
     const horizontalFov = 2 * Math.atan(tanHalf * this.camera.aspect);
