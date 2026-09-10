@@ -1,0 +1,192 @@
+:root {
+  --bg: #fef6e4;
+  --ink: #2b2b3a;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  font-family: 'Comic Sans MS', 'Chalkboard SE', 'Trebuchet MS', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  -webkit-tap-highlight-color: transparent;
+}
+
+#app {
+  height: 100%;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* ---------- Home menu ---------- */
+#menu {
+  min-height: 100%;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+}
+
+.menu-title {
+  font-size: clamp(2rem, 6vw, 3.5rem);
+  margin: 12px 0 0;
+  text-align: center;
+}
+
+.card-grid {
+  width: 100%;
+  max-width: 900px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 22px;
+}
+
+.game-card {
+  font: inherit;
+  border: none;
+  cursor: pointer;
+  border-radius: 28px;
+  padding: 28px 20px;
+  min-height: 210px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #fff;
+  background: var(--card-color, #888);
+  box-shadow: 0 10px 0 rgba(0, 0, 0, 0.15), 0 14px 28px rgba(0, 0, 0, 0.18);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  position: relative;
+}
+
+.game-card:hover,
+.game-card:focus-visible {
+  transform: translateY(-4px) scale(1.02);
+  outline: none;
+}
+
+.game-card:active {
+  transform: translateY(2px);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.15), 0 8px 16px rgba(0, 0, 0, 0.18);
+}
+
+.game-card__emoji {
+  font-size: 4rem;
+  line-height: 1;
+}
+
+.game-card__title {
+  font-size: 1.7rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.game-card__grade {
+  font-size: 1.05rem;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.28);
+  padding: 4px 14px;
+  border-radius: 999px;
+}
+
+/* Coming-soon placeholder cards */
+.game-card--soon {
+  cursor: default;
+  filter: grayscale(0.5);
+  opacity: 0.75;
+}
+
+.game-card__badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+/* ---------- 3D stage ---------- */
+#stage {
+  position: fixed;
+  inset: 0;
+}
+
+#stage canvas {
+  display: block;
+}
+
+/* Per-game HTML UI layer: above the canvas, below the back button.
+   Click-through by default so taps reach the 3D scene; games opt their
+   own controls back in with `pointer-events: auto`. */
+#game-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* Demo game's overlay control (Playground). */
+.pg-button {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: auto;
+  font: inherit;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #2b2b3a;
+  background: #ffd93d;
+  border: none;
+  border-radius: 999px;
+  padding: 14px 28px;
+  min-height: 56px;
+  cursor: pointer;
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.25);
+}
+
+.pg-button:active {
+  transform: translateX(-50%) translateY(2px);
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.25);
+}
+
+/* ---------- Back-to-menu button ---------- */
+#back-button {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 10;
+  font: inherit;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #fff;
+  background: #ff6b6b;
+  border: none;
+  border-radius: 999px;
+  padding: 14px 26px;
+  min-height: 56px;
+  cursor: pointer;
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.2);
+}
+
+#back-button:active {
+  transform: translateY(2px);
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.2);
+}
