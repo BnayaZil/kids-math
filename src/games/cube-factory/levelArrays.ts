@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { CELL, ROW_COLORS } from './theme';
+import { CELL, CUBE_SIZE, ROW_COLORS } from './theme';
 import { CubeBlock, disposeTree, makeGridOutline, makePanel } from './cubes';
 import { randomInt, skipCounts } from './math';
 import { starsFor, type Level, type LevelKit } from './level';
@@ -62,7 +62,11 @@ export function createArraysLevel(kit: LevelKit): Level {
     root.add(board);
     group = board;
 
-    board.add(makeGridOutline(rows, cols, 0xffffff));
+    // The grid sits at the back face of the cubes, so stamped cubes read as
+    // sitting on it rather than skewered through it.
+    const outline = makeGridOutline(rows, cols, 0xffffff);
+    outline.position.z = -CUBE_SIZE / 2;
+    board.add(outline);
 
     // One invisible plate over the whole grid: a nine-year-old should not have
     // to aim at a single row to stamp it.
@@ -70,7 +74,7 @@ export function createArraysLevel(kit: LevelKit): Level {
     tapTarget.position.z = 0.4;
     board.add(tapTarget);
 
-    highlight = makePanel(cols * CELL, CELL, 0xffd93d, 0.3);
+    highlight = makePanel(cols * CELL, CELL, 0xffd93d, 0.78, true);
     board.add(highlight);
     placeHighlight();
 
@@ -86,7 +90,7 @@ export function createArraysLevel(kit: LevelKit): Level {
   function placeHighlight() {
     if (!highlight) return;
     highlight.visible = stamped < rows;
-    highlight.position.set(0, stamped * CELL, 0.2);
+    highlight.position.set(0, stamped * CELL, -CUBE_SIZE / 2 + 0.02);
   }
 
   function stampRow() {
@@ -162,7 +166,7 @@ export function createArraysLevel(kit: LevelKit): Level {
       if (highlight && phase === 'stamping') {
         pulse += dt;
         const material = highlight.material as THREE.MeshBasicMaterial;
-        material.opacity = 0.24 + Math.sin(pulse * 5) * 0.13;
+        material.opacity = 0.78 + Math.sin(pulse * 5) * 0.22;
       }
     },
     dispose() {

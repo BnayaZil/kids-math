@@ -53,7 +53,11 @@ export function createFactorHuntLevel(kit: LevelKit): Level {
     const group = new THREE.Group();
     group.position.set((-cols * CELL) / 2, (-rows * CELL) / 2, 0);
     root.add(group);
-    group.add(makeGridOutline(rows, cols, 0xffffff));
+    // Outline and fill must sit at the same depth, or perspective slides one
+    // off the other and the rectangle looks like two rectangles.
+    const outline = makeGridOutline(rows, cols, 0xffffff);
+    outline.position.z = -0.59;
+    group.add(outline);
     const panel = makePanel(cols * CELL, rows * CELL, 0x4d96ff, 0.22);
     panel.position.z = -0.6;
     group.add(panel);
