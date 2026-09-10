@@ -72,9 +72,20 @@ export function createCubeFactory(ctx: GameContext): GameInstance {
 
   let level: Level | null = null;
   let stars: StarBook = loadStars();
-  // The HUD's height changes as controls appear; re-measuring every so often
-  // keeps the cubes out from under the number pad without thrashing layout.
-  let sinceMeasure = 99;
+
+  /**
+   * Re-fit the camera to whatever room the HUD has left.
+   *
+   * The HUD calls this the moment its height changes, so the fit is never a
+   * frame behind. A slow timer still runs underneath it to catch the things no
+   * event reports — a resize, a late-loading font, a line of text re-wrapping.
+   */
+  const refit = () => {
+    const { top, bottom } = hud.measure();
+    view.setBands(top, bottom);
+  };
+  hud.setLayoutListener(refit);
+  let sinceMeasure = 0;
   // A level finishes from inside its own update(); tearing it down there would
   // pull the floor out mid-frame, so it waits for the next one.
   let teardownPending = false;
@@ -157,17 +168,17 @@ export function createCubeFactory(ctx: GameContext): GameInstance {
   return {
     update(dt) {
       if (teardownPending) stopLevel();
-      if (++sinceMeasure >= 10) {
+      sinceMeasure += dt;
+      if (sinceMeasure >= 0.25) {
         sinceMeasure = 0;
-        const { top, bottom } = hud.bands();
-        view.setBands(top, bottom);
+        refit();
       }
       level?.update(dt);
       view.update(dt);
     },
     resize() {
-      sinceMeasure = 99;
       view.resize();
+      refit();
       level?.resize?.();
     },
     dispose() {
