@@ -1,6 +1,7 @@
 import type { GameDefinition } from '../shell/types';
 import { createPlayground } from './playground';
 import { createNumberHopper } from './number-hopper';
+import { createCubeFactory } from './cube-factory';
 
 /**
  * THE GAME REGISTRY.
@@ -19,5 +20,5 @@ import { createNumberHopper } from './number-hopper';
 export const games: GameDefinition[] = [
   { id: 'playground',    title: 'Playground',    grade: 'Demo',      color: '#ff6b6b', emoji: '🎡', create: createPlayground },
   { id: 'number-hopper', title: 'Number Hopper', grade: '2nd grade', color: '#4d96ff', emoji: '🐸', create: createNumberHopper },
-  { id: 'cube-factory',  title: 'Cube Factory',  grade: '4th grade', color: '#6bcb77', emoji: '🧊' /* Seq 4 adds: create: createCubeFactory */ },
+  { id: 'cube-factory',  title: 'Cube Factory',  grade: '4th grade', color: '#6bcb77', emoji: '🧊', create: createCubeFactory },
 ];
