@@ -1,0 +1,273 @@
+/*
+ * Number Hopper's own styles.
+ *
+ * Every class is prefixed `nh-` and this file is imported by the game module,
+ * never by the shell — the game owns its look and leaves src/style.css alone.
+ *
+ * Two constraints shaped the sizing:
+ *  - The shell's back-to-menu button is fixed at top-left with z-index 10, so
+ *    nothing here goes above 9 and the top banner steps down out of its way on
+ *    narrow screens.
+ *  - Targets are for a 7-year-old's finger: nothing tappable is under 64px,
+ *    and the four hop buttons are far bigger than that.
+ */
+
+/*
+ * Fills the shell's #game-overlay, which already handles stacking and is
+ * itself click-through. Repeating pointer-events here keeps this module
+ * correct on its own, but only the controls below ever opt back in.
+ */
+.nh-root {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  font-family: inherit;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.nh-root button {
+  pointer-events: auto;
+  font: inherit;
+  border: none;
+  cursor: pointer;
+  color: #fff;
+  border-radius: 26px;
+  box-shadow: 0 7px 0 rgba(0, 0, 0, 0.22), 0 10px 20px rgba(0, 0, 0, 0.18);
+  transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.1s ease;
+}
+
+.nh-root button:active {
+  transform: translateY(4px);
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.22), 0 5px 10px rgba(0, 0, 0, 0.18);
+}
+
+.nh-root button:disabled {
+  filter: grayscale(0.55) brightness(0.95);
+  cursor: default;
+}
+
+/* ---------- the sum, top centre ---------- */
+.nh-banner {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 30px;
+  background: rgba(255, 255, 255, 0.94);
+  border-radius: 28px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.16);
+  max-width: min(92vw, 620px);
+}
+
+.nh-sum {
+  font-size: clamp(2.1rem, 7vw, 3.4rem);
+  font-weight: 800;
+  line-height: 1.05;
+  white-space: nowrap;
+  color: #2b2b3a;
+}
+
+/* How far along the journey the child is — a bar, so it needs no reading. */
+.nh-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.nh-progress__track {
+  flex: 1;
+  height: 16px;
+  min-width: 90px;
+  border-radius: 999px;
+  background: #e8e2d4;
+  overflow: hidden;
+}
+
+.nh-progress__fill {
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #4d96ff, #6bcb77);
+  transition: width 0.25s ease;
+}
+
+.nh-progress__count {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #5a5a6e;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ---------- coaching line ---------- */
+/*
+ * Sits above the frog, not on it. The frog is kept near the middle of the
+ * screen by the camera, so a centred hint covered both the character and the
+ * number bubble it was commenting on.
+ */
+.nh-hint {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.9);
+  padding: 16px 34px;
+  border-radius: 999px;
+  font-size: clamp(1.4rem, 5vw, 2.2rem);
+  font-weight: 800;
+  color: #fff;
+  background: #ff9f43;
+  box-shadow: 0 8px 0 rgba(0, 0, 0, 0.18);
+  opacity: 0;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  white-space: nowrap;
+}
+
+.nh-hint--show {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.nh-hint--good {
+  background: #6bcb77;
+}
+
+/* ---------- the four hop buttons ---------- */
+.nh-pad {
+  position: absolute;
+  bottom: max(18px, env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: clamp(8px, 2.4vw, 20px);
+  padding: 0 12px;
+}
+
+.nh-hop {
+  min-width: clamp(74px, 20vw, 132px);
+  min-height: clamp(74px, 15vh, 116px);
+  font-size: clamp(1.5rem, 5.4vw, 2.6rem);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Tens are the wide leaps, ones the little steps — colour says which. */
+.nh-hop--ten {
+  background: #4d96ff;
+}
+
+.nh-hop--one {
+  background: #6bcb77;
+}
+
+/* ---------- level picker and level-complete panels ---------- */
+.nh-panel {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+  /* Set here, not per child: the page's default ink is near-black, which is
+   * invisible against this scrim. */
+  color: #fff;
+  background: rgba(38, 34, 52, 0.82);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.nh-panel__title {
+  margin: 0;
+  font-size: clamp(1.7rem, 6vw, 2.8rem);
+  font-weight: 800;
+  color: #fff;
+  text-align: center;
+}
+
+/* Wide enough for all five levels in one row on a desktop; wraps on its own
+ * below that, rather than stranding a single card on a second line. */
+.nh-levels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+  width: 100%;
+  max-width: 880px;
+}
+
+.nh-level {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 14px;
+  min-height: 160px;
+  background: var(--nh-level-color, #4d96ff);
+}
+
+.nh-level__emoji {
+  font-size: 2.9rem;
+  line-height: 1;
+}
+
+.nh-level__title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.nh-stars {
+  font-size: 1.3rem;
+  letter-spacing: 2px;
+  color: #ffe14d;
+}
+
+/* The big stars on the level-complete panel — the reward, so they get to be
+ * gold and enormous. The shadow keeps the hollow ones readable too. */
+.nh-result-stars {
+  font-size: clamp(3rem, 14vw, 5.5rem);
+  letter-spacing: 8px;
+  line-height: 1;
+  color: #ffd93d;
+  text-shadow: 0 5px 0 rgba(0, 0, 0, 0.32);
+}
+
+.nh-panel__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  justify-content: center;
+}
+
+.nh-action {
+  padding: 18px 32px;
+  min-height: 68px;
+  font-size: 1.35rem;
+  font-weight: 800;
+  background: #6bcb77;
+}
+
+.nh-action--secondary {
+  background: #4d96ff;
+}
+
+/* Clear the shell's back button once the screen is too narrow to sit beside it. */
+@media (max-width: 760px) {
+  .nh-banner {
+    top: 84px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nh-root button,
+  .nh-hint,
+  .nh-progress__fill {
+    transition: none;
+  }
+}
